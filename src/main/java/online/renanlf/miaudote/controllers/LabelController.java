@@ -57,6 +57,10 @@ public class LabelController {
 	
 	@DeleteMapping("/labels/{id}")
 	public void deleteLabel(@PathVariable long id) {
-		repo.deleteById(id);
+		repo.findById(id)
+			.ifPresent(label -> {
+				label.setActive(false);
+				repo.save(label);
+			});
 	}
 }
