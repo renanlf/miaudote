@@ -1,46 +1,109 @@
 package online.renanlf.miaudote.controllers;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasSize;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.util.Collections;
+import java.util.List;
 
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.reactive.server.WebTestClient;
 
 import online.renanlf.miaudote.model.Label;
-import online.renanlf.miaudote.repositories.LabelRepository;
 
-@AutoConfigureMockMvc(addFilters = false)
-@WebMvcTest(LabelController.class)
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class LabelControllerTest {
-
-	@Autowired
-	private MockMvc mvc;
-	
-	@MockBean
-	private LabelRepository repo;
 	
 	@Test
-	public void test() throws Exception {
-		Label label = new Label();
-		label.setTagName("testLabel");
+	@Order(1)
+	public void testGetEmpty(@Autowired WebTestClient webClient) throws Exception {
+		webClient
+			.get().uri("/labels")
+			.exchange()
+			.expectStatus().isOk()
+			.expectBody(List.class).isEqualTo(Collections.emptyList());
+	}
+	
+	@Test
+	@Order(2)
+	public void testPost(@Autowired WebTestClient webClient) throws Exception {
+		var label = new Label();
+		label.setTagName("teste");
 		
-		when(repo.findAll()).thenReturn(Collections.singletonList(label));
+		webClient
+			.post().uri("/labels")
+			.contentType(MediaType.APPLICATION_JSON)
+			.bodyValue(label)
+			.exchange()
+		    .expectStatus().isOk()
+		    .expectBody().jsonPath("tagName").isEqualTo("teste");
 		
-		mvc.perform(get("/labels")
-				.contentType(MediaType.APPLICATION_JSON))
-	      		.andExpect(status().isOk())
-	      		.andExpect(jsonPath("$", hasSize(1)))
-	      		.andExpect(jsonPath("$[0].tagName", is("testLabel")));
+		webClient
+			.get().uri("/labels")
+			.exchange()
+			.expectStatus().isOk()
+			.expectBody(String.class).isEqualTo("[{\"id\":1,\"tagName\":\"teste\"}]");
+	}
+	
+	@Test
+	@Order(3)
+	public void testPut(@Autowired WebTestClient webClient) throws Exception {
+		var label = new Label();
+		label.setTagName("testeDiferente");
+		label.setId(1);
+		
+		webClient
+			.put().uri("/labels/15")
+			.contentType(MediaType.APPLICATION_JSON)
+			.bodyValue(label)
+			.exchange()
+		    .expectStatus().isNotFound();
+		
+		webClient
+			.put().uri("/labels/1")
+			.contentType(MediaType.APPLICATION_JSON)
+			.bodyValue(label)
+			.exchange()
+		    .expectStatus().isOk();
+		
+		webClient
+			.get().uri("/labels")
+			.exchange()
+			.expectStatus().isOk()
+			.expectBody(String.class).isEqualTo("[{\"id\":1,\"tagName\":\"testeDiferente\"}]");
+	}
+	
+	@Test
+	@Order(4)
+	public void testGetById(@Autowired WebTestClient webClient) throws Exception {
+		webClient
+			.get().uri("/labels/1")
+			.exchange()
+			.expectStatus().isOk()
+			.expectBody(String.class).isEqualTo("{\"id\":1,\"tagName\":\"testeDiferente\"}");
+		
+		webClient
+			.get().uri("/labels/2")
+			.exchange()
+			.expectStatus().isNotFound();
+	}
+	
+	@Test
+	@Order(5)
+	public void testDelete(@Autowired WebTestClient webClient) throws Exception {
+		webClient
+			.delete().uri("/labels/1")
+			.exchange()
+			.expectStatus().isOk();
+		
+		webClient
+			.get().uri("/labels/1")
+			.exchange()
+			.expectStatus().isNotFound();
 	}
 }

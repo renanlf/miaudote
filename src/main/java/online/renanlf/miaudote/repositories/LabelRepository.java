@@ -1,9 +1,9 @@
 package online.renanlf.miaudote.repositories;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.ListCrudRepository;
 
 import online.renanlf.miaudote.model.Label;
 
-public interface LabelRepository extends JpaRepository<Label, Long> {
+public interface LabelRepository extends ListCrudRepository<Label, Long> {
 
 }
