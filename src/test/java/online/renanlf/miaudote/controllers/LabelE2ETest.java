@@ -51,7 +51,7 @@ public class LabelE2ETest {
 			.bodyValue(label)
 			.exchange()
 		    .expectStatus().is4xxClientError()
-		    .expectBody().jsonPath("status").isEqualTo("422");
+		    .expectBody().jsonPath("tagName").isEqualTo("The tag name must be not empty");
 		
 		webClient
 			.get().uri("/labels")
@@ -115,5 +115,22 @@ public class LabelE2ETest {
 			.get().uri("/labels/1")
 			.exchange()
 			.expectStatus().isNotFound();
+	}
+	
+	@Test
+	@Order(6)
+	public void testPostWithSomeId(@Autowired WebTestClient webClient) throws Exception {
+		var label = new Label();
+		label.setTagName("teste");
+		// test if no matter the id it will replace it with a JPA id
+		label.setId(30);
+		
+		webClient
+			.post().uri("/labels")
+			.contentType(MediaType.APPLICATION_JSON)
+			.bodyValue(label)
+			.exchange()
+		    .expectStatus().isOk()
+		    .expectBody().jsonPath("id").isEqualTo("2");
 	}
 }

@@ -1,18 +1,26 @@
 package online.renanlf.miaudote.controllers;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.validation.Valid;
 import online.renanlf.miaudote.model.Label;
 import online.renanlf.miaudote.repositories.LabelRepository;
 
@@ -23,6 +31,7 @@ import online.renanlf.miaudote.repositories.LabelRepository;
  *
  */
 @RestController
+@RequestMapping("/labels")
 public class LabelController {
 	
 	@Autowired
@@ -30,28 +39,25 @@ public class LabelController {
 	
 	private static final String ERROR_MESSAGE = "Label is not found";
 	
-	@GetMapping("/labels")
+	@GetMapping
 	public List<Label> getLabels() {
 		return repo.findAll();
 	}
 	
-	@PostMapping("/labels")
-	public Label postLabel(@RequestBody Label label) {
-		checkLabel(label);
+	@PostMapping
+	public Label postLabel(@Valid @RequestBody Label label) {
 		return repo.save(label);
 	}
 	
-	@GetMapping("/labels/{id}")
+	@GetMapping("/{id}")
 	public Label getLabel(@PathVariable long id) {
 		return repo.findById(id)
 				.orElseThrow(() -> 
 					new ResponseStatusException(HttpStatus.NOT_FOUND, ERROR_MESSAGE));
 	}
 	
-	@PutMapping("/labels/{id}")
-	public Label putLabel(@RequestBody Label newLabel, @PathVariable long id) {	
-		checkLabel(newLabel);
-		
+	@PutMapping("/{id}")
+	public Label putLabel(@Valid @RequestBody Label newLabel, @PathVariable long id) {	
 		return repo.findById(id)
 			.map(label -> {
 				label.setTagName(newLabel.getTagName());
@@ -61,7 +67,7 @@ public class LabelController {
 				new ResponseStatusException(HttpStatus.NOT_FOUND, ERROR_MESSAGE));
 	}
 	
-	@DeleteMapping("/labels/{id}")
+	@DeleteMapping("/{id}")
 	public void deleteLabel(@PathVariable long id) {
 		repo.findById(id)
 			.ifPresent(label -> {
@@ -69,8 +75,16 @@ public class LabelController {
 			});
 	}
 	
-	private void checkLabel(Label label) {
-		if(label.getTagName() == null || label.getTagName().isBlank())
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Tag name must contains a value");
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public Map<String, String> handleValidationExceptions(
+	  MethodArgumentNotValidException ex) {
+	    Map<String, String> errors = new HashMap<>();
+	    ex.getBindingResult().getAllErrors().forEach((error) -> {
+	        String fieldName = ((FieldError) error).getField();
+	        String errorMessage = error.getDefaultMessage();
+	        errors.put(fieldName, errorMessage);
+	    });
+	    return errors;
 	}
 }

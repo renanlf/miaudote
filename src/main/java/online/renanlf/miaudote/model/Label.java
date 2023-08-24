@@ -8,8 +8,10 @@ import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -20,8 +22,10 @@ import lombok.NoArgsConstructor;
 @SQLDelete(sql = "UPDATE label SET deleted = true WHERE id=?")
 @Where(clause = "deleted=false")
 public @Data class Label {
-	@Id @GeneratedValue
+	@Id @GeneratedValue(strategy = GenerationType.AUTO)
 	private long id;
+	
+	@NotBlank(message = "The tag name must be not empty")
 	private String tagName;
 	
 	// to hide this property from JSON mapped object
