@@ -17,7 +17,7 @@ import online.renanlf.miaudote.model.Label;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class LabelControllerTest {
+public class LabelE2ETest {
 	
 	@Test
 	@Order(1)
@@ -42,6 +42,16 @@ public class LabelControllerTest {
 			.exchange()
 		    .expectStatus().isOk()
 		    .expectBody().jsonPath("tagName").isEqualTo("teste");
+		
+		label.setTagName("    ");
+		
+		webClient
+			.post().uri("/labels")
+			.contentType(MediaType.APPLICATION_JSON)
+			.bodyValue(label)
+			.exchange()
+		    .expectStatus().is4xxClientError()
+		    .expectBody().jsonPath("status").isEqualTo("422");
 		
 		webClient
 			.get().uri("/labels")

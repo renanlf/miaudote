@@ -37,6 +37,7 @@ public class LabelController {
 	
 	@PostMapping("/labels")
 	public Label postLabel(@RequestBody Label label) {
+		checkLabel(label);
 		return repo.save(label);
 	}
 	
@@ -48,7 +49,9 @@ public class LabelController {
 	}
 	
 	@PutMapping("/labels/{id}")
-	public Label putLabel(@RequestBody Label newLabel, @PathVariable long id) {		
+	public Label putLabel(@RequestBody Label newLabel, @PathVariable long id) {	
+		checkLabel(newLabel);
+		
 		return repo.findById(id)
 			.map(label -> {
 				label.setTagName(newLabel.getTagName());
@@ -64,5 +67,10 @@ public class LabelController {
 			.ifPresent(label -> {
 				repo.delete(label);
 			});
+	}
+	
+	private void checkLabel(Label label) {
+		if(label.getTagName() == null || label.getTagName().isBlank())
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Tag name must contains a value");
 	}
 }
