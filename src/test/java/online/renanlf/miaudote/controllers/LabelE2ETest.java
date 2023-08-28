@@ -1,7 +1,11 @@
 package online.renanlf.miaudote.controllers;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -14,6 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import online.renanlf.miaudote.model.Label;
+import online.renanlf.miaudote.model.LoginRequisition;
+import reactor.core.publisher.Mono;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -25,6 +31,14 @@ public class LabelE2ETest {
 		webClient
 			.get().uri("/labels")
 			.exchange()
+			.expectStatus().isForbidden();
+		
+		var token = getToken(webClient);
+		
+		webClient
+			.get().uri("/labels")
+			.header("Authorization", "Bearer " + token)
+			.exchange()
 			.expectStatus().isOk()
 			.expectBody(List.class).isEqualTo(Collections.emptyList());
 	}
@@ -35,8 +49,11 @@ public class LabelE2ETest {
 		var label = new Label();
 		label.setTagName("teste");
 		
+		var token = getToken(webClient);
+		
 		webClient
 			.post().uri("/labels")
+			.header("Authorization", "Bearer " + token)
 			.contentType(MediaType.APPLICATION_JSON)
 			.bodyValue(label)
 			.exchange()
@@ -122,7 +139,7 @@ public class LabelE2ETest {
 	public void testPostWithSomeId(@Autowired WebTestClient webClient) throws Exception {
 		var label = new Label();
 		label.setTagName("teste");
-		// test if no matter the id it will replace it with a JPA id
+		// I am testing to see if the JPA will replace any id, regardless of its value.
 		label.setId(30);
 		
 		webClient
@@ -132,5 +149,85 @@ public class LabelE2ETest {
 			.exchange()
 		    .expectStatus().isOk()
 		    .expectBody().jsonPath("id").isEqualTo("2");
+	}
+	
+	@Test
+	@Order(7)
+	public void testGetWithParam(@Autowired WebTestClient webClient) throws Exception {
+		var names = Arrays.asList("carinhoso", "atencioso", "dorme na cama", "miador", "idoso", "carente");
+		
+		// posting some labels
+		names.stream()
+			.map(name -> {
+				var label = new Label();
+				label.setTagName(name);
+				
+				return label;
+			})
+			.forEach(label -> 
+				webClient.post().uri("/labels")
+					.bodyValue(label).exchange()
+					.expectStatus().isOk()
+					.expectBody().jsonPath("tagName", label.getTagName())
+			);
+		
+		// checking if it was added the labels
+		webClient.get().uri("/labels")
+			.accept(MediaType.APPLICATION_JSON)
+			.exchange()
+			.expectStatus().isOk()
+			.expectBodyList(Label.class)
+			.hasSize(names.size() + 1);
+		
+		var namesWithOso = names.stream()
+				.filter(name -> 
+					name.contains("oso")).collect(Collectors.toSet());
+		
+		var responseList = webClient.get().uri("/labels?name=oso")
+			.exchange()
+			.expectStatus().isOk()
+			.expectBodyList(Label.class)
+			.hasSize(namesWithOso.size())
+			.returnResult()
+			.getResponseBody();
+		
+		assertTrue(responseList
+			.stream()
+			.map(Label::getTagName)
+			.collect(Collectors.toSet())
+			.equals(namesWithOso));
+		
+		// delete some label and check if it updates the list
+		Long someId = responseList.get(0).getId();
+		responseList.remove(0);
+		
+		webClient.delete().uri("/labels/" + someId)
+			.exchange()
+			.expectStatus().isOk();
+		
+		var newResponseList = webClient.get().uri("/labels?name=oso")
+				.exchange()
+				.expectStatus().isOk()
+				.expectBodyList(Label.class)
+				.hasSize(namesWithOso.size() - 1)
+				.returnResult()
+				.getResponseBody();
+		
+		assertTrue(newResponseList
+			.stream()
+			.collect(Collectors.toSet())
+			.equals(responseList.stream().collect(Collectors.toSet())));
+			
+	}
+	
+	private String getToken(WebTestClient webClient) {
+		Mono<LoginRequisition> mono = Mono.just(LoginRequisition.builder().email("leandrorenanf@gmail.com").password("admin").build());
+		
+		return webClient.post().uri("/login")
+			.contentType(MediaType.APPLICATION_JSON)
+			.body(mono, LoginRequisition.class)
+			.exchange()
+			.expectBody(String.class)
+			.returnResult().getResponseBody();
 	}
 }

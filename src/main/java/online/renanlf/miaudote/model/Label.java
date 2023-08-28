@@ -6,6 +6,7 @@ import org.hibernate.annotations.Where;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,6 +26,7 @@ public @Data class Label {
 	@Id @GeneratedValue(strategy = GenerationType.AUTO)
 	private long id;
 	
+	@Column(name = "tag_name")
 	@NotBlank(message = "The tag name must be not empty")
 	private String tagName;
 	

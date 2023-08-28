@@ -1,0 +1,1 @@
+INSERT INTO login (id, email, password, deleted) VALUES (0, 'leandrorenanf@gmail.com', '$2a$12$mkZxASXhI8bEvEI3o.tC7eeD4Yh/nNBBQUjNqv2qMFGKs4DPR6Gmu', false);
