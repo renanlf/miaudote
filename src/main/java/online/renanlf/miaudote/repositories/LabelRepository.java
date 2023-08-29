@@ -11,6 +11,6 @@ public interface LabelRepository extends ListCrudRepository<Label, Long> {
 
 	@Query(nativeQuery = true,
 			value = "SELECT * FROM label l WHERE l.tag_name like %?1% and l.deleted = false")
-	List<Label> findAllContainingName(String name);
+	List<Label> findAllByName(String name);
 
 }

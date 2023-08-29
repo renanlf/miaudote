@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -25,15 +26,28 @@ import reactor.core.publisher.Mono;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class LabelE2ETest {
 	
+	private static String token;
+	
+	@BeforeAll
+	public static void createToken(@Autowired WebTestClient webClient) {
+		Mono<LoginRequisition> mono = Mono.just(LoginRequisition.builder().email("leandrorenanf@gmail.com").password("admin").build());
+				
+		token = webClient.post().uri("/login")
+			.contentType(MediaType.APPLICATION_JSON)
+			.body(mono, LoginRequisition.class)
+			.exchange()
+			.expectBody(String.class)
+			.returnResult().getResponseBody();
+	}
+	
 	@Test
 	@Order(1)
 	public void testGetEmpty(@Autowired WebTestClient webClient) throws Exception {
 		webClient
 			.get().uri("/labels")
 			.exchange()
-			.expectStatus().isForbidden();
-		
-		var token = getToken(webClient);
+			.expectStatus().isOk()
+			.expectBody(List.class).isEqualTo(Collections.emptyList());
 		
 		webClient
 			.get().uri("/labels")
@@ -49,7 +63,12 @@ public class LabelE2ETest {
 		var label = new Label();
 		label.setTagName("teste");
 		
-		var token = getToken(webClient);
+		webClient
+			.post().uri("/labels")
+			.contentType(MediaType.APPLICATION_JSON)
+			.bodyValue(label)
+			.exchange()
+		    .expectStatus().isForbidden();
 		
 		webClient
 			.post().uri("/labels")
@@ -64,6 +83,7 @@ public class LabelE2ETest {
 		
 		webClient
 			.post().uri("/labels")
+			.header("Authorization", "Bearer " + token)
 			.contentType(MediaType.APPLICATION_JSON)
 			.bodyValue(label)
 			.exchange()
@@ -72,6 +92,7 @@ public class LabelE2ETest {
 		
 		webClient
 			.get().uri("/labels")
+			.header("Authorization", "Bearer " + token)
 			.exchange()
 			.expectStatus().isOk()
 			.expectBody(String.class).isEqualTo("[{\"id\":1,\"tagName\":\"teste\"}]");
@@ -86,13 +107,15 @@ public class LabelE2ETest {
 		
 		webClient
 			.put().uri("/labels/15")
+			.header("Authorization", "Bearer " + token)
 			.contentType(MediaType.APPLICATION_JSON)
 			.bodyValue(label)
 			.exchange()
-		    .expectStatus().isNotFound();
+		    .expectStatus().isForbidden();
 		
 		webClient
 			.put().uri("/labels/1")
+			.header("Authorization", "Bearer " + token)
 			.contentType(MediaType.APPLICATION_JSON)
 			.bodyValue(label)
 			.exchange()
@@ -100,6 +123,7 @@ public class LabelE2ETest {
 		
 		webClient
 			.get().uri("/labels")
+			.header("Authorization", "Bearer " + token)
 			.exchange()
 			.expectStatus().isOk()
 			.expectBody(String.class).isEqualTo("[{\"id\":1,\"tagName\":\"testeDiferente\"}]");
@@ -110,14 +134,16 @@ public class LabelE2ETest {
 	public void testGetById(@Autowired WebTestClient webClient) throws Exception {
 		webClient
 			.get().uri("/labels/1")
+			.header("Authorization", "Bearer " + token)
 			.exchange()
 			.expectStatus().isOk()
 			.expectBody(String.class).isEqualTo("{\"id\":1,\"tagName\":\"testeDiferente\"}");
 		
 		webClient
 			.get().uri("/labels/2")
+			.header("Authorization", "Bearer " + token)
 			.exchange()
-			.expectStatus().isNotFound();
+			.expectStatus().isForbidden();
 	}
 	
 	@Test
@@ -125,13 +151,15 @@ public class LabelE2ETest {
 	public void testDelete(@Autowired WebTestClient webClient) throws Exception {
 		webClient
 			.delete().uri("/labels/1")
+			.header("Authorization", "Bearer " + token)
 			.exchange()
 			.expectStatus().isOk();
 		
 		webClient
 			.get().uri("/labels/1")
+			.header("Authorization", "Bearer " + token)
 			.exchange()
-			.expectStatus().isNotFound();
+			.expectStatus().isForbidden();
 	}
 	
 	@Test
@@ -144,6 +172,7 @@ public class LabelE2ETest {
 		
 		webClient
 			.post().uri("/labels")
+			.header("Authorization", "Bearer " + token)
 			.contentType(MediaType.APPLICATION_JSON)
 			.bodyValue(label)
 			.exchange()
@@ -166,6 +195,7 @@ public class LabelE2ETest {
 			})
 			.forEach(label -> 
 				webClient.post().uri("/labels")
+					.header("Authorization", "Bearer " + token)
 					.bodyValue(label).exchange()
 					.expectStatus().isOk()
 					.expectBody().jsonPath("tagName", label.getTagName())
@@ -173,6 +203,7 @@ public class LabelE2ETest {
 		
 		// checking if it was added the labels
 		webClient.get().uri("/labels")
+			.header("Authorization", "Bearer " + token)
 			.accept(MediaType.APPLICATION_JSON)
 			.exchange()
 			.expectStatus().isOk()
@@ -184,7 +215,7 @@ public class LabelE2ETest {
 					name.contains("oso")).collect(Collectors.toSet());
 		
 		var responseList = webClient.get().uri("/labels?name=oso")
-			.exchange()
+			.header("Authorization", "Bearer " + token).exchange()
 			.expectStatus().isOk()
 			.expectBodyList(Label.class)
 			.hasSize(namesWithOso.size())
@@ -202,10 +233,12 @@ public class LabelE2ETest {
 		responseList.remove(0);
 		
 		webClient.delete().uri("/labels/" + someId)
+		.header("Authorization", "Bearer " + token)
 			.exchange()
 			.expectStatus().isOk();
 		
 		var newResponseList = webClient.get().uri("/labels?name=oso")
+				.header("Authorization", "Bearer " + token)
 				.exchange()
 				.expectStatus().isOk()
 				.expectBodyList(Label.class)
@@ -218,16 +251,5 @@ public class LabelE2ETest {
 			.collect(Collectors.toSet())
 			.equals(responseList.stream().collect(Collectors.toSet())));
 			
-	}
-	
-	private String getToken(WebTestClient webClient) {
-		Mono<LoginRequisition> mono = Mono.just(LoginRequisition.builder().email("leandrorenanf@gmail.com").password("admin").build());
-		
-		return webClient.post().uri("/login")
-			.contentType(MediaType.APPLICATION_JSON)
-			.body(mono, LoginRequisition.class)
-			.exchange()
-			.expectBody(String.class)
-			.returnResult().getResponseBody();
 	}
 }

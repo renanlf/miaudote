@@ -15,6 +15,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import online.renanlf.miaudote.repositories.UserLoginRepository;
+import online.renanlf.miaudote.services.JwtService;
 
 /**
  * This class is heavely based on Amigoscode's implementation YouTube video
@@ -27,6 +28,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	
 	@Autowired
 	private UserLoginRepository userRepo;
+	
+	@Autowired
+	private JwtService jwtService;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -42,10 +46,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				var user = userRepo.findByToken(token)
 						.orElseThrow(() -> new AuthenticationCredentialsNotFoundException("Token not found"));
 				
-				var authToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-				authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-				
-				SecurityContextHolder.getContext().setAuthentication(authToken);
+				if(!jwtService.isExpired(token)) {				
+					var authToken = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword(), user.getAuthorities());
+					authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+					
+					SecurityContextHolder.getContext().setAuthentication(authToken);
+				} else {
+					// if it is expired then clear the token in db
+					user.setToken(null);
+					userRepo.save(user);
+				}
 			}
 		}
 		
