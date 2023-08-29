@@ -39,6 +39,12 @@ public class MySecurityConfig {
                 	.requestMatchers(HttpMethod.GET, "/labels")
                 	.permitAll()
                 	
+                	.requestMatchers(HttpMethod.POST, "/petshelters").permitAll()
+                	.requestMatchers(HttpMethod.GET, "/petshelters").permitAll()
+                	
+                	// SHELTER permissions
+                	.requestMatchers("/petshelters/**").hasAuthority("SHELTER")
+                	
                 	// ADMIN permissions
                 	.requestMatchers("/**").hasAuthority("ADMIN")
                 	
