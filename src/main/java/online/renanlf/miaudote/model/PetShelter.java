@@ -2,9 +2,17 @@ package online.renanlf.miaudote.model;
 
 import java.util.List;
 
-import jakarta.persistence.DiscriminatorValue;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
@@ -14,7 +22,12 @@ import lombok.NoArgsConstructor;
 @Entity
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
-//@DiscriminatorValue("1")
+@Table(name = "pet_shelter")
+@SQLDelete(sql = "UPDATE pet_shelter SET deleted = true WHERE id=?")
+@Where(clause = "deleted=false")
+@JsonIdentityInfo(
+		generator = ObjectIdGenerators.PropertyGenerator.class, 
+		property = "id")
 public @Data class PetShelter extends UserLogin {
 	
 	/**
@@ -31,5 +44,8 @@ public @Data class PetShelter extends UserLogin {
 	
 	@OneToMany(mappedBy = "shelter")
 	private List<Pet> pets;
+	
+	@JsonProperty(access = Access.WRITE_ONLY)
+	private boolean deleted = false;
 	
 }

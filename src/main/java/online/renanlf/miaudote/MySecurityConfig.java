@@ -33,17 +33,19 @@ public class MySecurityConfig {
         		.csrf()
         		.disable()
                 .authorizeHttpRequests()
-                	.requestMatchers(HttpMethod.POST, "/login")
-                	.permitAll()
-                	
-                	.requestMatchers(HttpMethod.GET, "/labels")
-                	.permitAll()
+                	.requestMatchers(HttpMethod.POST, "/login").permitAll()
+ 
+                	.requestMatchers(HttpMethod.GET, "/labels").permitAll()
                 	
                 	.requestMatchers(HttpMethod.POST, "/petshelters").permitAll()
                 	.requestMatchers(HttpMethod.GET, "/petshelters").permitAll()
                 	
+                	.requestMatchers(HttpMethod.GET, "/pets").permitAll()
+                	
                 	// SHELTER permissions
                 	.requestMatchers("/petshelters/**").hasAuthority("SHELTER")
+                	.requestMatchers(HttpMethod.POST, "/pets").hasAuthority("SHELTER")
+                	.requestMatchers("/pets/**").hasAuthority("SHELTER")
                 	
                 	// ADMIN permissions
                 	.requestMatchers("/**").hasAuthority("ADMIN")
