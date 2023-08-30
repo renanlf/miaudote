@@ -17,47 +17,55 @@ import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.validation.Valid;
 import online.renanlf.miaudote.model.PetShelter;
+import online.renanlf.miaudote.model.Role;
 import online.renanlf.miaudote.services.PetShelterService;
+import online.renanlf.miaudote.services.UserLoginService;
 
 @RestController
 @RequestMapping("/petshelters")
 public class PetShelterController extends ErrorHandler {
 
 	@Autowired
-	private PetShelterService service;
+	private PetShelterService shelterService;
+	
+	@Autowired
+	private UserLoginService userService;
 	
 	@GetMapping
 	public List<PetShelter> get() {
-		return service.findAll();
+		return shelterService.findAll();
 	}
 	
 	@PostMapping
 	public PetShelter post(@Valid @RequestBody PetShelter shelter) {
-		return service.save(shelter);
+		return shelterService.save(shelter);
 	}
 	
 	@GetMapping("/{id}")
 	public PetShelter getById(@PathVariable Long id) {
-		return service.findById(id);
+		return shelterService.findById(id);
 	}
 	
 	@DeleteMapping("/{id}")
 	public void delete(@PathVariable Long id) {
-		var auth = SecurityContextHolder.getContext().getAuthentication();
-		var shelter = service.findByEmail(auth.getPrincipal().toString());
-		
-		if(shelter.getId() == id) service.delete(id);
-		
-		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+		assertAuthorization(id);
+		shelterService.delete(id);
 	}
 	
 	@PutMapping("/{id}")
 	public PetShelter put(@PathVariable Long id, @RequestBody PetShelter newOne) {
-		var auth = SecurityContextHolder.getContext().getAuthentication();
-		var shelter = service.findByEmail(auth.getPrincipal().toString());
+		assertAuthorization(id);
+		return shelterService.update(id, newOne);
+	}
+	
+	private void assertAuthorization(long id) {
+		var authToken = SecurityContextHolder.getContext().getAuthentication();
+		var user = userService.findByEmail(authToken.getPrincipal().toString());
 		
-		if(shelter.getId() == id) return service.update(id, newOne);
-		
-		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+		if(!(user.getRole() == Role.ADMIN 
+				|| (user.getRole() == Role.SHELTER 
+					&& user.getId() == id))) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+		}
 	}
 }
