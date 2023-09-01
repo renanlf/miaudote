@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.validation.Valid;
+import online.renanlf.miaudote.model.Gender;
 import online.renanlf.miaudote.model.Pet;
 import online.renanlf.miaudote.model.PetShelter;
 import online.renanlf.miaudote.model.PetView;
@@ -40,12 +41,12 @@ public class PetController extends ErrorHandler {
 			@RequestParam Optional<String> labels,
 			@RequestParam Optional<Float> maxAge,
 			@RequestParam Optional<Float> minAge,
-			@RequestParam Optional<Boolean> male,
+			@RequestParam Optional<Gender> gender,
 			@RequestParam Optional<Specie> specie,
 			@RequestParam Optional<Integer> shelterId 
 		) {
 		
-		return petService.findAll(shelterId, labels, minAge, maxAge, male, specie);
+		return petService.findAll(shelterId, minAge, maxAge, gender, specie, labels);
 	}
 	
 	@PostMapping

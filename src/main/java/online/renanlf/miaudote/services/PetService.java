@@ -8,7 +8,10 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.PersistenceContext;
+import online.renanlf.miaudote.model.Gender;
 import online.renanlf.miaudote.model.Pet;
 import online.renanlf.miaudote.model.PetView;
 import online.renanlf.miaudote.model.Specie;
@@ -21,54 +24,23 @@ public class PetService {
 	
 	@Autowired
 	private PetRepository repo;
+	
+	@PersistenceContext
+	private EntityManager entityManager;
 
 	public List<PetView> findAll(
 			Optional<Integer> shelterId, 
-			Optional<String> labels, 
 			Optional<Float> minAge, 
 			Optional<Float> maxAge, 
-			Optional<Boolean> male, 
-			Optional<Specie> specie) {
+			Optional<Gender> gender, 
+			Optional<Specie> specie,
+			Optional<String> labelIds) {
 		
-//		Optional<List<String>> labelIds = labels
-//				.map(s -> Arrays.asList(s.split(",")));
-//		
-//		String where = buildWhere(
-//				shelterId,
-//				minAge,
-//				maxAge,
-//				male, 
-//				specie);
-//		
-//		List<Pet> pets = labelIds
-//				.map(ids -> ids.stream().collect(Collectors.joining(",")))
-//				.map(strIds -> repo.findAll(where, strIds))
-//				.orElse(repo.findAll(where));
+		List<Pet> list = findAllPets(shelterId, minAge, maxAge, gender, specie, labelIds);
 		
-		
-		return repo.findAll().stream()
+		return list.stream()
 				.map(PetView::of)
 				.toList();
-	}
-	
-	private String buildWhere(
-			Optional<Integer> shelterId,
-			Optional<Float> minAge, 
-			Optional<Float> maxAge, 
-			Optional<Boolean> male, 
-			Optional<Specie> specie) {
-		
-		List<String> filters = new ArrayList<>();
-		filters.add("deleted = false");
-		
-		shelterId.ifPresent(v -> filters.add("shelter_id = " + v));
-		minAge.ifPresent(v -> filters.add("age >= " + v));
-		maxAge.ifPresent(v -> filters.add("age <= " + v));
-		male.ifPresent(v -> filters.add("gender = " + v));
-		specie.ifPresent(v -> filters.add("specie = " + v.name()));
-		
-		return filters.stream().collect(Collectors.joining(" AND "));
-		
 	}
 
 	public Pet save(Pet pet) {
@@ -97,6 +69,47 @@ public class PetService {
 		return repo.findById(id)
 				.orElseThrow(() -> 
 					new EntityNotFoundException(ERROR_MESSAGE + ":" + id));
+	}
+	
+	@SuppressWarnings("unchecked")
+	private List<Pet> findAllPets(
+			Optional<Integer> shelterId,
+			Optional<Float> minAge, 
+			Optional<Float> maxAge,
+			Optional<Gender> gender,
+			Optional<Specie> specie,
+			Optional<String> labelIds) {
+		
+		StringBuilder builder = new StringBuilder("SELECT pet.* FROM pet ");
+		
+		var whereClauses = new ArrayList<String>();
+		whereClauses.add("pet.deleted = false");
+		
+		if(!labelIds.isEmpty()) {
+			var ids = labelIds.get();		
+			whereClauses.add("pl.label_id in (" + ids + ")");
+
+			builder.append("INNER JOIN pet_label pl ON pl.pet_id = pet.id ");	
+		}
+		
+		shelterId.ifPresent(id -> whereClauses.add("pet.shelter_id = " + id));
+		
+		minAge.ifPresent(min -> whereClauses.add("pet.age >= " + min));
+		maxAge.ifPresent(max -> whereClauses.add("pet.age <= " + max));
+
+		specie.ifPresent(value -> whereClauses.add("pet.specie = " + value.name()));
+		gender.ifPresent(value -> whereClauses.add("pet.gender = " + value.name()));
+		
+		builder.append("WHERE ");
+		builder.append(whereClauses.stream()
+				.collect(Collectors.joining(" AND ")));
+		
+		System.out.println(builder.toString());
+		
+		return entityManager
+				.createNativeQuery(builder.toString(), Pet.class)
+				.getResultList();
+		
 	}
 
 }
