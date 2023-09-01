@@ -13,7 +13,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
 import online.renanlf.miaudote.model.Gender;
 import online.renanlf.miaudote.model.Pet;
-import online.renanlf.miaudote.model.PetView;
+import online.renanlf.miaudote.model.PetDto;
 import online.renanlf.miaudote.model.Specie;
 import online.renanlf.miaudote.repositories.PetRepository;
 
@@ -28,7 +28,7 @@ public class PetService {
 	@PersistenceContext
 	private EntityManager entityManager;
 
-	public List<PetView> findAll(
+	public List<PetDto> findAll(
 			Optional<Integer> shelterId, 
 			Optional<Float> minAge, 
 			Optional<Float> maxAge, 
@@ -39,7 +39,7 @@ public class PetService {
 		List<Pet> list = findAllPets(shelterId, minAge, maxAge, gender, specie, labelIds);
 		
 		return list.stream()
-				.map(PetView::of)
+				.map(PetDto::of)
 				.toList();
 	}
 

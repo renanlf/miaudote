@@ -21,7 +21,7 @@ import jakarta.validation.Valid;
 import online.renanlf.miaudote.model.Gender;
 import online.renanlf.miaudote.model.Pet;
 import online.renanlf.miaudote.model.PetShelter;
-import online.renanlf.miaudote.model.PetView;
+import online.renanlf.miaudote.model.PetDto;
 import online.renanlf.miaudote.model.Specie;
 import online.renanlf.miaudote.services.PetService;
 import online.renanlf.miaudote.services.PetShelterService;
@@ -37,7 +37,7 @@ public class PetController extends ErrorHandler {
 	private PetShelterService shelterService;
 	
 	@GetMapping
-	public List<PetView> getAll(
+	public List<PetDto> getAll(
 			@RequestParam Optional<String> labels,
 			@RequestParam Optional<Float> maxAge,
 			@RequestParam Optional<Float> minAge,

@@ -4,11 +4,12 @@ import java.util.List;
 
 import lombok.Data;
 
-public @Data class PetView {
+public @Data class PetDto {
 	
-	public PetView(Pet pet) {
+	public PetDto(Pet pet) {
 		this.id = pet.getId();
-		this.shelter = pet.getShelter();
+		this.shelterId = pet.getShelter().getId();
+		this.shelterName = pet.getShelter().getName();
 		this.specie = pet.getSpecie();
 		this.labels = pet.getLabels();
 		this.likes = pet.getLikers().size();
@@ -20,13 +21,15 @@ public @Data class PetView {
 		this.gender = pet.getGender();
 	}
 	
-	public static PetView of(Pet pet) {
-		return new PetView(pet);
+	public static PetDto of(Pet pet) {
+		return new PetDto(pet);
 	}
 	
 	private long id;
 	
-	private PetShelter shelter;
+	private long shelterId;
+	
+	private String shelterName;
 	
 	private Specie specie;
 	
