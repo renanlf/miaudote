@@ -42,10 +42,16 @@ public class MySecurityConfig {
                 	
                 	.requestMatchers(HttpMethod.GET, "/pets").permitAll()
                 	
+                	.requestMatchers(HttpMethod.POST, "/petlikers").permitAll()
+                	.requestMatchers(HttpMethod.GET, "/petlikers").permitAll()
+                	
                 	// SHELTER permissions
                 	.requestMatchers("/petshelters/**").hasAuthority("SHELTER")
                 	.requestMatchers(HttpMethod.POST, "/pets").hasAuthority("SHELTER")
                 	.requestMatchers("/pets/**").hasAuthority("SHELTER")
+                	
+                	//LIKER permissions
+                	.requestMatchers("/petlikers/**").hasAuthority("LIKER")
                 	
                 	// ADMIN permissions
                 	.requestMatchers("/**").hasAuthority("ADMIN")
