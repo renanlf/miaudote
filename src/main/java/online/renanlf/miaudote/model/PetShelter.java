@@ -14,7 +14,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -37,10 +36,6 @@ public @Data class PetShelter extends UserLogin {
 	
 	@NotBlank(message = "The bio must be not empty")
 	private String bio;
-	
-	@NotBlank(message = "Provide a phone number")
-	@Positive(message = "Provide just numbers")
-	private String phoneNumber;
 	
 	@OneToMany(mappedBy = "shelter")
 	private List<Pet> pets;

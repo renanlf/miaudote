@@ -20,6 +20,7 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -57,6 +58,10 @@ public @Data class UserLogin implements UserDetails {
 	@JsonProperty(access = Access.WRITE_ONLY)
 	@Column(unique = true)
 	private String token;
+	
+	@NotBlank(message = "Provide a phone number")
+	@Positive(message = "Provide just numbers")
+	private String phoneNumber;
 
 	@JsonProperty(access = Access.WRITE_ONLY)
 	@Override
