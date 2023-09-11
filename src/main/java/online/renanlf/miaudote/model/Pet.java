@@ -53,7 +53,7 @@ public @Data class Pet {
 	@Enumerated(EnumType.STRING)
 	private Gender gender;
 	
-	private List<String> imagesUrls = Collections.emptyList();
+	private List<String> images = Collections.emptyList();
 	
 	@NotBlank(message = "Provide a name for this pet")
 	private String name;

@@ -87,7 +87,7 @@ public class PetController extends ErrorHandler {
 	}
 	
 	/**
-	 * this method ensure there is no pet of that shelter with the given id
+	 * this method ensure the given pet belongs to the given shelter
 	 * @param shelter
 	 * @param petId
 	 */

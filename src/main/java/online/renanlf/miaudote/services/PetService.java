@@ -59,6 +59,7 @@ public class PetService {
 			pet.setSpecie(newPet.getSpecie());
 			pet.setAge(newPet.getAge());
 			pet.setLabels(newPet.getLabels());
+			pet.setImages(newPet.getImages());
 			
 			return pet;
 		}).orElseThrow(() -> 

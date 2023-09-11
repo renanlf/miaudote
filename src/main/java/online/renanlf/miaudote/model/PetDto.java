@@ -14,7 +14,7 @@ public @Data class PetDto {
 		this.labels = pet.getLabels();
 		this.likes = pet.getLikers().size();
 		this.adoptionAttempts = pet.getAdopts().size();
-		this.imagesUrls = pet.getImagesUrls();
+		this.images = pet.getImages();
 		this.name = pet.getName();
 		this.bio = pet.getBio();
 		this.age = pet.getAge();
@@ -39,7 +39,7 @@ public @Data class PetDto {
 	
 	private int adoptionAttempts;
 	
-	private List<String> imagesUrls;
+	private List<String> images;
 	
 	private String name;	
 	
